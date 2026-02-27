@@ -1,413 +1,262 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Enkripsi Pesan</title>
-   <style>
-       * {
-           margin: 0;
-           padding: 0;
-           box-sizing: border-box;
-       }
-
-       body {
-           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-           min-height: 100vh;
-           padding: 20px;
-       }
-
-       .container {
-           max-width: 600px;
-           margin: 0 auto;
-           background: white;
-           border-radius: 20px;
-           box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-           overflow: hidden;
-       }
-
-       .header {
-           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-           color: white;
-           padding: 20px;
-           text-align: center;
-       }
-
-       .current-day {
-           background: rgba(255,255,255,0.2);
-           display: inline-block;
-           padding: 8px 16px;
-           border-radius: 20px;
-           font-weight: 600;
-       }
-
-       .tabs {
-           display: flex;
-           background: #f0f0f0;
-       }
-
-       .tab {
-           flex: 1;
-           padding: 15px;
-           text-align: center;
-           cursor: pointer;
-           border: none;
-           background: #f0f0f0;
-           font-weight: 600;
-           transition: all 0.3s;
-       }
-
-       .tab.active {
-           background: white;
-           color: #667eea;
-           border-bottom: 3px solid #667eea;
-       }
-
-       .content {
-           padding: 30px;
-       }
-
-       .panel {
-           display: none;
-       }
-
-       .panel.active {
-           display: block;
-       }
-
-       .form-group {
-           margin-bottom: 20px;
-       }
-
-       label {
-           display: block;
-           margin-bottom: 8px;
-           font-weight: 600;
-           color: #333;
-       }
-
-       select, textarea {
-           width: 100%;
-           padding: 12px;
-           border: 2px solid #e0e0e0;
-           border-radius: 10px;
-           font-size: 16px;
-           transition: border-color 0.3s;
-       }
-
-       select:focus, textarea:focus {
-           outline: none;
-           border-color: #667eea;
-       }
-
-       textarea {
-           resize: vertical;
-           min-height: 100px;
-           font-family: monospace;
-       }
-
-       .auto-badge {
-           display: inline-block;
-           background: #667eea;
-           color: white;
-           font-size: 11px;
-           padding: 2px 8px;
-           border-radius: 10px;
-           margin-left: 8px;
-           font-weight: normal;
-       }
-
-       .btn {
-           width: 100%;
-           padding: 15px;
-           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-           color: white;
-           border: none;
-           border-radius: 10px;
-           font-size: 16px;
-           font-weight: 600;
-           cursor: pointer;
-           transition: transform 0.2s, box-shadow 0.2s;
-       }
-
-       .btn:hover {
-           transform: translateY(-2px);
-           box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-       }
-
-       .btn:active {
-           transform: translateY(0);
-       }
-
-       .result-box {
-           margin-top: 20px;
-           padding: 20px;
-           background: #f8f9fa;
-           border-radius: 10px;
-           border-left: 4px solid #667eea;
-       }
-
-       .result-label {
-           font-size: 12px;
-           color: #666;
-           text-transform: uppercase;
-           letter-spacing: 1px;
-           margin-bottom: 5px;
-       }
-
-       .result-text {
-           font-family: monospace;
-           font-size: 18px;
-           color: #333;
-           word-break: break-all;
-       }
-
-       .copy-btn {
-           margin-top: 10px;
-           padding: 8px 16px;
-           background: #667eea;
-           color: white;
-           border: none;
-           border-radius: 5px;
-           cursor: pointer;
-           font-size: 14px;
-       }
-
-       .manual-toggle {
-           text-align: center;
-           margin-top: 10px;
-       }
-
-       .manual-toggle a {
-           color: #667eea;
-           font-size: 13px;
-           text-decoration: none;
-           cursor: pointer;
-       }
-
-       .manual-toggle a:hover {
-           text-decoration: underline;
-       }
-
-       .hidden {
-           display: none;
-       }
-
-       .success-msg {
-           color: #25D366;
-           font-size: 14px;
-           margin-top: 5px;
-       }
-   </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enkripsi</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f2f2f7;min-height:100vh}
+        .container{max-width:100%;padding:20px}
+        .header{background:#007aff;color:white;padding:20px;text-align:center;border-radius:15px;margin-bottom:20px}
+        .header h1{font-size:20px;font-weight:600}
+        .day-badge{background:rgba(255,255,255,0.2);display:inline-block;padding:8px 16px;border-radius:20px;margin-top:10px;font-size:14px}
+        .tabs{display:flex;background:white;border-radius:15px;overflow:hidden;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+        .tab{flex:1;padding:15px;text-align:center;border:none;background:white;font-weight:600;color:#8e8e93;cursor:pointer}
+        .tab.active{color:#007aff;background:#f2f2f7}
+        .panel{display:none;background:white;border-radius:15px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+        .panel.active{display:block}
+        .form-group{margin-bottom:20px}
+        label{display:block;margin-bottom:8px;font-weight:600;color:#1c1c1e;font-size:14px}
+        select,textarea{width:100%;padding:12px;border:1px solid #c7c7cc;border-radius:10px;font-size:16px;background:#f2f2f7;border:none}
+        textarea{min-height:100px;font-family:monospace;resize:none}
+        .btn{width:100%;padding:16px;background:#007aff;color:white;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer}
+        .btn:active{opacity:0.8}
+        .result-box{margin-top:20px;padding:15px;background:#f2f2f7;border-radius:12px}
+        .result-label{font-size:12px;color:#8e8e93;margin-bottom:5px;text-transform:uppercase}
+        .result-text{font-size:18px;color:#1c1c1e;word-break:break-all;background:white;padding:12px;border-radius:8px;line-height:1.6}
+        .copy-btn{margin-top:10px;padding:10px 20px;background:#34c759;color:white;border:none;border-radius:8px;font-size:14px;width:100%}
+        .hidden{display:none}
+        .success{color:#34c759;font-size:14px;margin-top:10px;text-align:center}
+        .toggle{text-align:center;margin-top:10px;font-size:13px;color:#007aff;cursor:pointer}
+        .badge{background:#007aff;color:white;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:5px}
+        .layer-info{font-size:12px;color:#8e8e93;margin-top:5px;font-style:italic}
+        .raw-text{font-size:11px;color:#666;font-family:monospace;margin-top:5px;word-break:break-all}
+    </style>
+<base target="_blank">
 </head>
 <body>
-   <div class="container">
-       <div class="header">
-           <div class="current-day" id="current-day-display">Memuat...</div>
-       </div>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Enkripsi 2 Lapis</h1>
+            <div class="day-badge" id="day">Memuat...</div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('enc')">Enkripsi</button>
+            <button class="tab" onclick="switchTab('dec')">Dekripsi</button>
+        </div>
+        
+        <div id="enc-panel" class="panel active">
+            <div class="form-group">
+                <label>Kunci <span class="badge">AUTO</span></label>
+                <select id="enc-key" disabled>
+                    <option value="S">Senin [S]</option>
+                    <option value="L">Selasa [L]</option>
+                    <option value="R">Rabu [R]</option>
+                    <option value="K">Kamis [K]</option>
+                    <option value="J">Jumat [J]</option>
+                    <option value="B">Sabtu [B]</option>
+                    <option value="M">Minggu [M]</option>
+                </select>
+                <div class="toggle" onclick="toggle('enc')">Ubah manual</div>
+            </div>
+            <div class="form-group">
+                <label>Pesan</label>
+                <textarea id="enc-in" placeholder="Tulis pesan..."></textarea>
+                <div class="layer-info">Lapis 1: Caesar + Simbol | Lapis 2: Emoji</div>
+            </div>
+            <button class="btn" onclick="encrypt()">Enkripsi</button>
+            <div id="enc-out" class="result-box hidden">
+                <div class="result-label">Hasil (Emoji)</div>
+                <div class="result-text" id="enc-text"></div>
+                <div class="raw-text" id="enc-raw"></div>
+                <button class="copy-btn" onclick="copy('enc-text')">Salin Emoji</button>
+                <div id="enc-ok" class="success hidden">Tersalin!</div>
+            </div>
+        </div>
+        
+        <div id="dec-panel" class="panel">
+            <div class="form-group">
+                <label>Kunci <span class="badge">AUTO</span></label>
+                <select id="dec-key" disabled>
+                    <option value="S">Senin [S]</option>
+                    <option value="L">Selasa [L]</option>
+                    <option value="R">Rabu [R]</option>
+                    <option value="K">Kamis [K]</option>
+                    <option value="J">Jumat [J]</option>
+                    <option value="B">Sabtu [B]</option>
+                    <option value="M">Minggu [M]</option>
+                </select>
+                <div class="toggle" onclick="toggle('dec')">Ubah manual</div>
+            </div>
+            <div class="form-group">
+                <label>Pesan Emoji</label>
+                <textarea id="dec-in" placeholder="Tempel emoji..."></textarea>
+                <div class="layer-info">Lapis 1: Emoji | Lapis 2: Caesar + Simbol</div>
+            </div>
+            <button class="btn" onclick="decrypt()">Dekripsi</button>
+            <div id="dec-out" class="result-box hidden">
+                <div class="result-label">Hasil</div>
+                <div class="result-text" id="dec-text" style="font-family:monospace;font-size:16px"></div>
+                <button class="copy-btn" onclick="copy('dec-text')">Salin</button>
+                <div id="dec-ok" class="success hidden">Tersalin!</div>
+            </div>
+        </div>
+    </div>
 
-       <div class="tabs">
-           <button class="tab active" onclick="switchTab('encrypt')">Enkripsi</button>
-           <button class="tab" onclick="switchTab('decrypt')">Dekripsi</button>
-       </div>
-
-       <div class="content">
-           <!-- Panel Enkripsi -->
-           <div id="encrypt-panel" class="panel active">
-               <div class="form-group">
-                   <label>
-                       Kunci Hari
-                       <span class="auto-badge">AUTO</span>
-                   </label>
-                   <select id="enc-day" disabled>
-                       <option value="S">Senin [S]</option>
-                       <option value="L">Selasa [L]</option>
-                       <option value="R">Rabu [R]</option>
-                       <option value="K">Kamis [K]</option>
-                       <option value="J">Jumat [J]</option>
-                       <option value="B">Sabtu [B]</option>
-                       <option value="M">Minggu [M]</option>
-                   </select>
-                   <div class="manual-toggle">
-                       <a onclick="toggleManual('enc')">Ubah ke manual</a>
-                   </div>
-               </div>
-
-               <div class="form-group">
-                   <label>Pesan:</label>
-                   <textarea id="enc-input" placeholder="Tulis pesan..."></textarea>
-               </div>
-
-               <button class="btn" onclick="encrypt()">Enkripsi</button>
-
-               <div id="enc-result" class="result-box hidden">
-                   <div class="result-label">Hasil:</div>
-                   <div class="result-text" id="enc-output"></div>
-                   <button class="copy-btn" onclick="copyText('enc-output')">Salin</button>
-                   <div id="enc-success" class="success-msg hidden">Tersalin!</div>
-               </div>
-           </div>
-
-           <!-- Panel Dekripsi -->
-           <div id="decrypt-panel" class="panel">
-               <div class="form-group">
-                   <label>
-                       Kunci Hari
-                       <span class="auto-badge">AUTO</span>
-                   </label>
-                   <select id="dec-day" disabled>
-                       <option value="S">Senin [S]</option>
-                       <option value="L">Selasa [L]</option>
-                       <option value="R">Rabu [R]</option>
-                       <option value="K">Kamis [K]</option>
-                       <option value="J">Jumat [J]</option>
-                       <option value="B">Sabtu [B]</option>
-                       <option value="M">Minggu [M]</option>
-                   </select>
-                   <div class="manual-toggle">
-                       <a onclick="toggleManual('dec')">Ubah ke manual</a>
-                   </div>
-               </div>
-
-               <div class="form-group">
-                   <label>Pesan Terenkripsi:</label>
-                   <textarea id="dec-input" placeholder="Tempel pesan..."></textarea>
-               </div>
-
-               <button class="btn" onclick="decrypt()">Dekripsi</button>
-
-               <div id="dec-result" class="result-box hidden">
-                   <div class="result-label">Hasil:</div>
-                   <div class="result-text" id="dec-output"></div>
-                   <button class="copy-btn" onclick="copyText('dec-output')">Salin</button>
-                   <div id="dec-success" class="success-msg hidden">Tersalin!</div>
-               </div>
-           </div>
-       </div>
-   </div>
-
-   <script>
-       const dayCodes = {
-           1: { code: 'S', name: 'Senin' },
-           2: { code: 'L', name: 'Selasa' },
-           3: { code: 'R', name: 'Rabu' },
-           4: { code: 'K', name: 'Kamis' },
-           5: { code: 'J', name: 'Jumat' },
-           6: { code: 'B', name: 'Sabtu' },
-           0: { code: 'M', name: 'Minggu' }
-       };
-
-       const numToSymbol = {
-           '0': ')', '1': '!', '2': '@', '3': '#', '4': '$',
-           '5': '%', '6': '^', '7': '&', '8': '*', '9': '('
-       };
-
-       const symbolToNum = {
-           ')': '0', '!': '1', '@': '2', '#': '3', '$': '4',
-           '%': '5', '^': '6', '&': '7', '*': '8', '(': '9'
-       };
-
-       let currentDayCode = '';
-       let currentDayName = '';
-
-       function detectCurrentDay() {
-           const today = new Date().getDay();
-           const dayInfo = dayCodes[today];
-           currentDayCode = dayInfo.code;
-           currentDayName = dayInfo.name;
-           
-           document.getElementById('current-day-display').textContent = `${currentDayName} [${currentDayCode}]`;
-           document.getElementById('enc-day').value = currentDayCode;
-           document.getElementById('dec-day').value = currentDayCode;
-       }
-
-       function switchTab(tab) {
-           document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-           document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-           
-           event.target.classList.add('active');
-           document.getElementById(tab + '-panel').classList.add('active');
-       }
-
-       function toggleManual(type) {
-           const select = document.getElementById(type + '-day');
-           const isDisabled = select.disabled;
-           
-           select.disabled = !isDisabled;
-           
-           const link = event.target;
-           if (isDisabled) {
-               link.textContent = 'Kembali ke otomatis';
-               select.previousElementSibling.querySelector('.auto-badge').style.display = 'none';
-           } else {
-               link.textContent = 'Ubah ke manual';
-               select.previousElementSibling.querySelector('.auto-badge').style.display = 'inline-block';
-               select.value = currentDayCode;
-           }
-       }
-
-       function caesarCipher(text, shift) {
-           return text.replace(/[a-zA-Z]/g, function(char) {
-               const base = char <= 'Z' ? 65 : 97;
-               return String.fromCharCode(((char.charCodeAt(0) - base + shift + 26) % 26) + base);
-           });
-       }
-
-       function encrypt() {
-           const day = document.getElementById('enc-day').value;
-           let text = document.getElementById('enc-input').value.toUpperCase();
-           
-           if (!text.trim()) {
-               alert('Masukkan pesan!');
-               return;
-           }
-
-           let encrypted = text.replace(/[0-9]/g, num => numToSymbol[num] || num);
-           encrypted = caesarCipher(encrypted, 3);
-           encrypted = `[${day}] ${encrypted}`;
-           
-           document.getElementById('enc-output').textContent = encrypted;
-           document.getElementById('enc-result').classList.remove('hidden');
-           document.getElementById('enc-success').classList.add('hidden');
-       }
-
-       function decrypt() {
-           const day = document.getElementById('dec-day').value;
-           let text = document.getElementById('dec-input').value.trim().toUpperCase();
-           
-           if (!text.trim()) {
-               alert('Masukkan pesan!');
-               return;
-           }
-
-           const dayCode = `[${day}]`;
-           if (!text.startsWith(dayCode)) {
-               alert('Kode hari tidak cocok!');
-               return;
-           }
-           text = text.substring(dayCode.length).trim();
-           
-           let decrypted = caesarCipher(text, -3);
-           decrypted = decrypted.replace(/[)!@#$%^&*(]/g, sym => symbolToNum[sym] || sym);
-           
-           document.getElementById('dec-output').textContent = decrypted;
-           document.getElementById('dec-result').classList.remove('hidden');
-           document.getElementById('dec-success').classList.add('hidden');
-       }
-
-       function copyText(elementId) {
-           const text = document.getElementById(elementId).textContent;
-           navigator.clipboard.writeText(text).then(() => {
-               const successId = elementId === 'enc-output' ? 'enc-success' : 'dec-success';
-               document.getElementById(successId).classList.remove('hidden');
-               setTimeout(() => {
-                   document.getElementById(successId).classList.add('hidden');
-               }, 2000);
-           });
-       }
-
-       window.onload = detectCurrentDay;
-   </script>
+    <script>
+        const days={1:'S',2:'L',3:'R',4:'K',5:'J',6:'B',0:'M'};
+        const names={1:'Senin',2:'Selasa',3:'Rabu',4:'Kamis',5:'Jumat',6:'Sabtu',0:'Minggu'};
+        const nums={'0':')','1':'!','2':'@','3':'#','4':'$','5':'%','6':'^','7':'&','8':'*','9':'('};
+        const syms={')':'0','!':'1','@':'2','#':'3','$':'4','%':'5','^':'6','&':'7','*':'8','(':'9'};
+        
+        // Mapping karakter ke kode Unicode yang konsisten
+        const charMap={
+            'A':'🅰','B':'🅱','C':'🌜','D':'🌛','E':'🎗','F':'🎏','G':'🌀','H':'♓','I':'🎐',
+            'J':'🎷','K':'🎋','L':'👢','M':'〽','N':'🎵','O':'🅾','P':'🅿','Q':'🍳','R':'🌱',
+            'S':'💲','T':'🌴','U':'⛎','V':'✅','W':'〰','X':'❎','Y':'🍸','Z':'💤',
+            '0':'0️⃣','1':'1️⃣','2':'2️⃣','3':'3️⃣','4':'4️⃣','5':'5️⃣','6':'6️⃣','7':'7️⃣','8':'8️⃣','9':'9️⃣',
+            '[':'⏪',']':'⏩','(':'⬅',')':'➡','!':'❗','@':'📧','#':'#️⃣','$':'💲','%':'💯',
+            '^':'🔼','&':'🔘','*':'✳',' ':'▫','+':'➕','-':'➖','=':'🟰'
+        };
+        
+        // Reverse mapping
+        const emojiMap={};
+        for(let k in charMap){
+            emojiMap[charMap[k]]=k;
+        }
+        
+        let today=new Date().getDay();
+        let code=days[today];
+        
+        function init(){
+            document.getElementById('day').textContent=names[today]+' ['+code+']';
+            document.getElementById('enc-key').value=code;
+            document.getElementById('dec-key').value=code;
+        }
+        
+        function switchTab(t){
+            document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(t+'-panel').classList.add('active');
+        }
+        
+        function toggle(t){
+            let s=document.getElementById(t+'-key');
+            s.disabled=!s.disabled;
+            event.target.textContent=s.disabled?'Ubah manual':'Kembali auto';
+        }
+        
+        function caesar(t,shift){
+            return t.replace(/[A-Z]/g,c=>String.fromCharCode((c.charCodeAt(0)-65+shift+26)%26+65));
+        }
+        
+        function toEmoji(text){
+            let result='';
+            for(let char of text){
+                result+=charMap[char]||char;
+            }
+            return result;
+        }
+        
+        function fromEmoji(text){
+            // Split berdasarkan emoji menggunakan regex
+            // Emoji umumnya terdiri dari 1-4 code points
+            let result='';
+            let buffer='';
+            
+            for(let i=0;i<text.length;i++){
+                buffer+=text[i];
+                
+                // Cek apakah buffer adalah emoji yang valid
+                if(emojiMap[buffer]){
+                    result+=emojiMap[buffer];
+                    buffer='';
+                }else if(buffer.length>4){
+                    // Jika terlalu panjang dan tidak cocok, lewati karakter pertama
+                    result+=buffer[0];
+                    buffer=buffer.slice(1);
+                }
+            }
+            
+            // Proses sisa buffer
+            if(buffer){
+                if(emojiMap[buffer]){
+                    result+=emojiMap[buffer];
+                }else{
+                    result+=buffer;
+                }
+            }
+            
+            return result;
+        }
+        
+        function encrypt(){
+            let k=document.getElementById('enc-key').value;
+            let t=document.getElementById('enc-in').value.toUpperCase();
+            if(!t)return alert('Isi pesan!');
+            
+            // Lapis 1: Caesar + Simbol angka
+            let layer1=t.replace(/[0-9]/g,n=>nums[n]);
+            layer1=caesar(layer1,3);
+            layer1='['+k+']'+layer1;
+            
+            // Lapis 2: Konversi ke emoji
+            let layer2=toEmoji(layer1);
+            
+            document.getElementById('enc-text').textContent=layer2;
+            document.getElementById('enc-raw').textContent='Raw: '+JSON.stringify(layer2);
+            document.getElementById('enc-out').classList.remove('hidden');
+            document.getElementById('enc-ok').classList.add('hidden');
+        }
+        
+        function decrypt(){
+            let k=document.getElementById('dec-key').value;
+            let t=document.getElementById('dec-in').value;
+            if(!t)return alert('Isi pesan!');
+            
+            // Debug
+            console.log('Input:',t);
+            console.log('Input length:',t.length);
+            console.log('Input chars:',[...t].map(c=>c+'('+c.charCodeAt(0)+')'));
+            
+            // Lapis 1: Konversi dari emoji
+            let layer1=fromEmoji(t);
+            console.log('Layer1:',layer1);
+            
+            // Lapis 2: Caesar + Simbol
+            let expected='['+k+']';
+            if(!layer1.startsWith(expected)){
+                // Coba cari posisi kunci
+                let foundKey='';
+                for(let i=0;i<Math.min(layer1.length,5);i++){
+                    foundKey+=layer1[i]||'';
+                }
+                alert('Kunci tidak cocok!\nDiharapkan: '+expected+'\nDitemukan: '+foundKey+'\n\nPastikan kunci hari sama saat enkripsi/dekripsi.');
+                return;
+            }
+            
+            layer1=layer1.slice(expected.length);
+            let layer2=caesar(layer1,-3);
+            layer2=layer2.replace(/[)!@#$%^&*(]/g,s=>syms[s]||s);
+            
+            document.getElementById('dec-text').textContent=layer2;
+            document.getElementById('dec-out').classList.remove('hidden');
+            document.getElementById('dec-ok').classList.add('hidden');
+        }
+        
+        function copy(id){
+            let t=document.getElementById(id).textContent;
+            navigator.clipboard.writeText(t).then(()=>{
+                let ok=id=='enc-text'?'enc-ok':'dec-ok';
+                document.getElementById(ok).classList.remove('hidden');
+                setTimeout(()=>document.getElementById(ok).classList.add('hidden'),2000);
+            });
+        }
+        
+        init();
+    </script>
 </body>
 </html>
