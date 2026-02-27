@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Enkripsi Pesan</title>
+   <style>
+       * {
+           margin: 0;
+           padding: 0;
+           box-sizing: border-box;
+       }
+
+       body {
+           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+           min-height: 100vh;
+           padding: 20px;
+       }
+
+       .container {
+           max-width: 600px;
+           margin: 0 auto;
+           background: white;
+           border-radius: 20px;
+           box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+           overflow: hidden;
+       }
+
+       .header {
+           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+           color: white;
+           padding: 20px;
+           text-align: center;
+       }
+
+       .current-day {
+           background: rgba(255,255,255,0.2);
+           display: inline-block;
+           padding: 8px 16px;
+           border-radius: 20px;
+           font-weight: 600;
+       }
+
+       .tabs {
+           display: flex;
+           background: #f0f0f0;
+       }
+
+       .tab {
+           flex: 1;
+           padding: 15px;
+           text-align: center;
+           cursor: pointer;
+           border: none;
+           background: #f0f0f0;
+           font-weight: 600;
+           transition: all 0.3s;
+       }
+
+       .tab.active {
+           background: white;
+           color: #667eea;
+           border-bottom: 3px solid #667eea;
+       }
+
+       .content {
+           padding: 30px;
+       }
+
+       .panel {
+           display: none;
+       }
+
+       .panel.active {
+           display: block;
+       }
+
+       .form-group {
+           margin-bottom: 20px;
+       }
+
+       label {
+           display: block;
+           margin-bottom: 8px;
+           font-weight: 600;
+           color: #333;
+       }
+
+       select, textarea {
+           width: 100%;
+           padding: 12px;
+           border: 2px solid #e0e0e0;
+           border-radius: 10px;
+           font-size: 16px;
+           transition: border-color 0.3s;
+       }
+
+       select:focus, textarea:focus {
+           outline: none;
+           border-color: #667eea;
+       }
+
+       textarea {
+           resize: vertical;
+           min-height: 100px;
+           font-family: monospace;
+       }
+
+       .auto-badge {
+           display: inline-block;
+           background: #667eea;
+           color: white;
+           font-size: 11px;
+           padding: 2px 8px;
+           border-radius: 10px;
+           margin-left: 8px;
+           font-weight: normal;
+       }
+
+       .btn {
+           width: 100%;
+           padding: 15px;
+           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+           color: white;
+           border: none;
+           border-radius: 10px;
+           font-size: 16px;
+           font-weight: 600;
+           cursor: pointer;
+           transition: transform 0.2s, box-shadow 0.2s;
+       }
+
+       .btn:hover {
+           transform: translateY(-2px);
+           box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+       }
+
+       .btn:active {
+           transform: translateY(0);
+       }
+
+       .result-box {
+           margin-top: 20px;
+           padding: 20px;
+           background: #f8f9fa;
+           border-radius: 10px;
+           border-left: 4px solid #667eea;
+       }
+
+       .result-label {
+           font-size: 12px;
+           color: #666;
+           text-transform: uppercase;
+           letter-spacing: 1px;
+           margin-bottom: 5px;
+       }
+
+       .result-text {
+           font-family: monospace;
+           font-size: 18px;
+           color: #333;
+           word-break: break-all;
+       }
+
+       .copy-btn {
+           margin-top: 10px;
+           padding: 8px 16px;
+           background: #667eea;
+           color: white;
+           border: none;
+           border-radius: 5px;
+           cursor: pointer;
+           font-size: 14px;
+       }
+
+       .manual-toggle {
+           text-align: center;
+           margin-top: 10px;
+       }
+
+       .manual-toggle a {
+           color: #667eea;
+           font-size: 13px;
+           text-decoration: none;
+           cursor: pointer;
+       }
+
+       .manual-toggle a:hover {
+           text-decoration: underline;
+       }
+
+       .hidden {
+           display: none;
+       }
+
+       .success-msg {
+           color: #25D366;
+           font-size: 14px;
+           margin-top: 5px;
+       }
+   </style>
+</head>
+<body>
+   <div class="container">
+       <div class="header">
+           <div class="current-day" id="current-day-display">Memuat...</div>
+       </div>
+
+       <div class="tabs">
+           <button class="tab active" onclick="switchTab('encrypt')">Enkripsi</button>
+           <button class="tab" onclick="switchTab('decrypt')">Dekripsi</button>
+       </div>
+
+       <div class="content">
+           <!-- Panel Enkripsi -->
+           <div id="encrypt-panel" class="panel active">
+               <div class="form-group">
+                   <label>
+                       Kunci Hari
+                       <span class="auto-badge">AUTO</span>
+                   </label>
+                   <select id="enc-day" disabled>
+                       <option value="S">Senin [S]</option>
+                       <option value="L">Selasa [L]</option>
+                       <option value="R">Rabu [R]</option>
+                       <option value="K">Kamis [K]</option>
+                       <option value="J">Jumat [J]</option>
+                       <option value="B">Sabtu [B]</option>
+                       <option value="M">Minggu [M]</option>
+                   </select>
+                   <div class="manual-toggle">
+                       <a onclick="toggleManual('enc')">Ubah ke manual</a>
+                   </div>
+               </div>
+
+               <div class="form-group">
+                   <label>Pesan:</label>
+                   <textarea id="enc-input" placeholder="Tulis pesan..."></textarea>
+               </div>
+
+               <button class="btn" onclick="encrypt()">Enkripsi</button>
+
+               <div id="enc-result" class="result-box hidden">
+                   <div class="result-label">Hasil:</div>
+                   <div class="result-text" id="enc-output"></div>
+                   <button class="copy-btn" onclick="copyText('enc-output')">Salin</button>
+                   <div id="enc-success" class="success-msg hidden">Tersalin!</div>
+               </div>
+           </div>
+
+           <!-- Panel Dekripsi -->
+           <div id="decrypt-panel" class="panel">
+               <div class="form-group">
+                   <label>
+                       Kunci Hari
+                       <span class="auto-badge">AUTO</span>
+                   </label>
+                   <select id="dec-day" disabled>
+                       <option value="S">Senin [S]</option>
+                       <option value="L">Selasa [L]</option>
+                       <option value="R">Rabu [R]</option>
+                       <option value="K">Kamis [K]</option>
+                       <option value="J">Jumat [J]</option>
+                       <option value="B">Sabtu [B]</option>
+                       <option value="M">Minggu [M]</option>
+                   </select>
+                   <div class="manual-toggle">
+                       <a onclick="toggleManual('dec')">Ubah ke manual</a>
+                   </div>
+               </div>
+
+               <div class="form-group">
+                   <label>Pesan Terenkripsi:</label>
+                   <textarea id="dec-input" placeholder="Tempel pesan..."></textarea>
+               </div>
+
+               <button class="btn" onclick="decrypt()">Dekripsi</button>
+
+               <div id="dec-result" class="result-box hidden">
+                   <div class="result-label">Hasil:</div>
+                   <div class="result-text" id="dec-output"></div>
+                   <button class="copy-btn" onclick="copyText('dec-output')">Salin</button>
+                   <div id="dec-success" class="success-msg hidden">Tersalin!</div>
+               </div>
+           </div>
+       </div>
+   </div>
+
+   <script>
+       const dayCodes = {
+           1: { code: 'S', name: 'Senin' },
+           2: { code: 'L', name: 'Selasa' },
+           3: { code: 'R', name: 'Rabu' },
+           4: { code: 'K', name: 'Kamis' },
+           5: { code: 'J', name: 'Jumat' },
+           6: { code: 'B', name: 'Sabtu' },
+           0: { code: 'M', name: 'Minggu' }
+       };
+
+       const numToSymbol = {
+           '0': ')', '1': '!', '2': '@', '3': '#', '4': '$',
+           '5': '%', '6': '^', '7': '&', '8': '*', '9': '('
+       };
+
+       const symbolToNum = {
+           ')': '0', '!': '1', '@': '2', '#': '3', '$': '4',
+           '%': '5', '^': '6', '&': '7', '*': '8', '(': '9'
+       };
+
+       let currentDayCode = '';
+       let currentDayName = '';
+
+       function detectCurrentDay() {
+           const today = new Date().getDay();
+           const dayInfo = dayCodes[today];
+           currentDayCode = dayInfo.code;
+           currentDayName = dayInfo.name;
+           
+           document.getElementById('current-day-display').textContent = `${currentDayName} [${currentDayCode}]`;
+           document.getElementById('enc-day').value = currentDayCode;
+           document.getElementById('dec-day').value = currentDayCode;
+       }
+
+       function switchTab(tab) {
+           document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+           document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+           
+           event.target.classList.add('active');
+           document.getElementById(tab + '-panel').classList.add('active');
+       }
+
+       function toggleManual(type) {
+           const select = document.getElementById(type + '-day');
+           const isDisabled = select.disabled;
+           
+           select.disabled = !isDisabled;
+           
+           const link = event.target;
+           if (isDisabled) {
+               link.textContent = 'Kembali ke otomatis';
+               select.previousElementSibling.querySelector('.auto-badge').style.display = 'none';
+           } else {
+               link.textContent = 'Ubah ke manual';
+               select.previousElementSibling.querySelector('.auto-badge').style.display = 'inline-block';
+               select.value = currentDayCode;
+           }
+       }
+
+       function caesarCipher(text, shift) {
+           return text.replace(/[a-zA-Z]/g, function(char) {
+               const base = char <= 'Z' ? 65 : 97;
+               return String.fromCharCode(((char.charCodeAt(0) - base + shift + 26) % 26) + base);
+           });
+       }
+
+       function encrypt() {
+           const day = document.getElementById('enc-day').value;
+           let text = document.getElementById('enc-input').value.toUpperCase();
+           
+           if (!text.trim()) {
+               alert('Masukkan pesan!');
+               return;
+           }
+
+           let encrypted = text.replace(/[0-9]/g, num => numToSymbol[num] || num);
+           encrypted = caesarCipher(encrypted, 3);
+           encrypted = `[${day}] ${encrypted}`;
+           
+           document.getElementById('enc-output').textContent = encrypted;
+           document.getElementById('enc-result').classList.remove('hidden');
+           document.getElementById('enc-success').classList.add('hidden');
+       }
+
+       function decrypt() {
+           const day = document.getElementById('dec-day').value;
+           let text = document.getElementById('dec-input').value.trim().toUpperCase();
+           
+           if (!text.trim()) {
+               alert('Masukkan pesan!');
+               return;
+           }
+
+           const dayCode = `[${day}]`;
+           if (!text.startsWith(dayCode)) {
+               alert('Kode hari tidak cocok!');
+               return;
+           }
+           text = text.substring(dayCode.length).trim();
+           
+           let decrypted = caesarCipher(text, -3);
+           decrypted = decrypted.replace(/[)!@#$%^&*(]/g, sym => symbolToNum[sym] || sym);
+           
+           document.getElementById('dec-output').textContent = decrypted;
+           document.getElementById('dec-result').classList.remove('hidden');
+           document.getElementById('dec-success').classList.add('hidden');
+       }
+
+       function copyText(elementId) {
+           const text = document.getElementById(elementId).textContent;
+           navigator.clipboard.writeText(text).then(() => {
+               const successId = elementId === 'enc-output' ? 'enc-success' : 'dec-success';
+               document.getElementById(successId).classList.remove('hidden');
+               setTimeout(() => {
+                   document.getElementById(successId).classList.add('hidden');
+               }, 2000);
+           });
+       }
+
+       window.onload = detectCurrentDay;
+   </script>
+</body>
+</html>
