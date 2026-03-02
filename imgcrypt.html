@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Image Encryptor Mobile</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-tab: #0f172a;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+            padding: 1.5rem 1rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 400;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 73px;
+            z-index: 99;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            right: 20%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 3px 3px 0 0;
+        }
+
+        .tab-icon {
+            font-size: 1.1rem;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            padding: 1rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(99, 102, 241, 0.03);
+            position: relative;
+        }
+
+        .drop-zone:active {
+            transform: scale(0.98);
+        }
+
+        .drop-zone.has-file {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .drop-zone input {
+            display: none;
+        }
+
+        .drop-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .drop-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .drop-text strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+
+        .file-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-top: 0.75rem;
+        }
+
+        /* Preview */
+        .preview-box {
+            margin-top: 1rem;
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--bg-dark);
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 250px;
+            object-fit: contain;
+            display: none;
+        }
+
+        .preview-img.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .preview-placeholder {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Password Strength */
+        .strength-bar {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+            display: none;
+        }
+
+        .strength-bar.active {
+            display: block;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Progress */
+        .progress-box {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .progress-box.active {
+            display: block;
+        }
+
+        .progress-track {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Result Box */
+        .result-box {
+            margin-top: 1rem;
+            padding: 1.25rem;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            display: none;
+        }
+
+        .result-box.active {
+            display: block;
+            animation: slideUp 0.4s ease;
+        }
+
+        .result-box.error {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            color: var(--success);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .result-box.error .result-title {
+            color: var(--error);
+        }
+
+        .result-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .filename-box {
+            background: rgba(0,0,0,0.2);
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 0.75rem 0;
+            font-family: monospace;
+            font-size: 0.8rem;
+            word-break: break-all;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .filename-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            font-family: inherit;
+        }
+
+        /* Info Section */
+        .info-section {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-text {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .info-text strong {
+            color: var(--primary);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Utility */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-1 {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Safe Area for Mobile */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .tab-content {
+                padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+            }
+        }
+
+        /* Touch Feedback */
+        @media (hover: none) {
+            .btn:active {
+                opacity: 0.8;
+            }
+            
+            .drop-zone:active {
+                background: rgba(99, 102, 241, 0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <span>🔐</span>
+            <span>Image Encryptor</span>
+        </div>
+        <div class="subtitle">Enkripsi gambar & nama file</div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('encrypt')">
+            <span class="tab-icon">🔒</span>
+            <span>Enkripsi</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('decrypt')">
+            <span class="tab-icon">🔓</span>
+            <span>Dekripsi</span>
+        </button>
+    </nav>
+
+    <!-- Encrypt Tab -->
+    <div id="encryptTab" class="tab-content active">
+        <div class="info-section">
+            <div class="info-text">
+                <strong>Privasi Total:</strong> Gambar dan nama file dienkripsi secara lokal. Tidak ada data yang dikirim ke server.
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <span>📁</span>
+                <span>Pilih Gambar</span>
+            </div>
+            
+            <div class="drop-zone" id="encryptDropZone">
+                <input type="file" id="encryptInput" accept="image/*">
+                <div class="drop-icon">📂</div>
+                <div class="drop-text">
+                    <strong>Tap untuk pilih gambar</strong>
+                    atau seret file ke sini
+                </div>
+                <div class="file-badge hidden" id="encryptFileBadge">
+                    <span>✓</span>
+                    <span id="encryptFileNameShort">file.jpg</span>
+                </div>
+            </div>
+
+            <div class="preview-box" id="encryptPreviewBox">
+                <div class="preview-placeholder">Pratinjau akan muncul di sini</div>
+                <img class="preview-img" id="encryptPreview" alt="Preview">
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <span>🔑</span>
+                <span>Password</span>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Buat Password</label>
+                <input type="password" class="input-field" id="encryptPassword" placeholder="Minimal 6 karakter">
+                <div class="strength-bar" id="strengthBar">
+                    <div class="strength-fill" id="strengthFill"></div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="encryptBtn" disabled>
+                <span>🔐 Enkripsi Sekarang</span>
+            </button>
+
+            <div class="progress-box" id="encryptProgress">
+                <div class="progress-track">
+                    <div class="progress-fill" id="encryptProgressFill"></div>
+                </div>
+                <div class="progress-text">Mengenkripsi...</div>
+            </div>
+
+            <div class="result-box" id="encryptResult">
+                <div class="result-title">
+                    <span>✅</span>
+                    <span>Berhasil!</span>
+                </div>
+                <div class="result-text">
+                    File dan nama telah terenkripsi. Nama file acak digunakan untuk keamanan ekstra.
+                </div>
+                <div class="filename-box">
+                    <div class="filename-label">Nama file terenkripsi:</div>
+                    <span id="encryptedFileName">encrypted_xxx.enc</span>
+                </div>
+                <button class="btn btn-success" id="encryptDownloadBtn">
+                    <span>⬇️ Unduh File</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Decrypt Tab -->
+    <div id="decryptTab" class="tab-content">
+        <div class="info-section">
+            <div class="info-text">
+                <strong>Catatan:</strong> Masukkan password yang sama saat enkripsi. Nama file asli akan dipulihkan otomatis.
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <span>🔐</span>
+                <span>Pilih File Terenkripsi</span>
+            </div>
+            
+            <div class="drop-zone" id="decryptDropZone">
+                <input type="file" id="decryptInput" accept=".enc,.encrypted,.bin">
+                <div class="drop-icon">🗝️</div>
+                <div class="drop-text">
+                    <strong>Tap untuk pilih file .enc</strong>
+                    File hasil enkripsi sebelumnya
+                </div>
+                <div class="file-badge hidden" id="decryptFileBadge">
+                    <span>✓</span>
+                    <span id="decryptFileNameShort">file.enc</span>
+                </div>
+            </div>
+
+            <div class="preview-box" id="decryptPreviewBox">
+                <div class="preview-placeholder">Hasil dekripsi akan muncul di sini</div>
+                <img class="preview-img" id="decryptPreview" alt="Decrypted">
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <span>🔑</span>
+                <span>Password</span>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Masukkan Password</label>
+                <input type="password" class="input-field" id="decryptPassword" placeholder="Password saat enkripsi">
+            </div>
+
+            <button class="btn btn-secondary" id="decryptBtn" disabled>
+                <span>🔓 Dekripsi Sekarang</span>
+            </button>
+
+            <div class="progress-box" id="decryptProgress">
+                <div class="progress-track">
+                    <div class="progress-fill" id="decryptProgressFill"></div>
+                </div>
+                <div class="progress-text">Mendekripsi...</div>
+            </div>
+
+            <div class="result-box" id="decryptResult">
+                <div class="result-title">
+                    <span>✅</span>
+                    <span>Berhasil!</span>
+                </div>
+                <div class="result-text">
+                    Gambar berhasil didekripsi. Nama file asli telah dipulihkan.
+                </div>
+                <div class="filename-box">
+                    <div class="filename-label">Nama file asli:</div>
+                    <span id="originalFileNameDisplay">original_name.jpg</span>
+                </div>
+                <button class="btn btn-success" id="decryptDownloadBtn">
+                    <span>💾 Simpan Gambar</span>
+                </button>
+            </div>
+
+            <div class="result-box error" id="decryptError">
+                <div class="result-title">
+                    <span>❌</span>
+                    <span>Gagal</span>
+                </div>
+                <div class="result-text">
+                    Password salah atau file rusak. Periksa kembali password Anda.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Switching
+        function switchTab(tab) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.tab-btn').classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tab + 'Tab').classList.add('active');
+        }
+
+        // Utility Functions
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function generateRandomName() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            let result = 'enc_';
+            for (let i = 0; i < 12; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result + '.enc';
+        }
+
+        function truncate(str, n) {
+            return str.length > n ? str.substr(0, n-1) + '...' : str;
+        }
+
+        // Crypto Functions
+        async function deriveKey(password, salt) {
+            const encoder = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                'raw', encoder.encode(password), { name: 'PBKDF2' },
+                false, ['deriveBits', 'deriveKey']
+            );
+            return crypto.subtle.deriveKey(
+                { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+                keyMaterial, { name: 'AES-GCM', length: 256 },
+                false, ['encrypt', 'decrypt']
+            );
+        }
+
+        // ENCRYPT LOGIC
+        const encDropZone = document.getElementById('encryptDropZone');
+        const encInput = document.getElementById('encryptInput');
+        const encPreview = document.getElementById('encryptPreview');
+        const encPassword = document.getElementById('encryptPassword');
+        const encBtn = document.getElementById('encryptBtn');
+        let encFile = null;
+        let encBlobUrl = null;
+
+        encDropZone.addEventListener('click', () => encInput.click());
+        
+        ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+            encDropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                if (eventName === 'dragover') encDropZone.style.borderColor = 'var(--primary)';
+                if (eventName === 'dragleave') encDropZone.style.borderColor = '';
+                if (eventName === 'drop' && e.dataTransfer.files.length) {
+                    handleEncryptFile(e.dataTransfer.files[0]);
+                    encDropZone.style.borderColor = '';
+                }
+            });
+        });
+
+        encInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleEncryptFile(e.target.files[0]);
+        });
+
+        function handleEncryptFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Pilih file gambar (JPG, PNG, GIF, WebP)');
+                return;
+            }
+            encFile = file;
+            
+            // Show badge
+            document.getElementById('encryptFileBadge').classList.remove('hidden');
+            document.getElementById('encryptFileNameShort').textContent = truncate(file.name, 20);
+            encDropZone.classList.add('has-file');
+            
+            // Preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                encPreview.src = e.target.result;
+                encPreview.classList.add('active');
+                document.querySelector('#encryptPreviewBox .preview-placeholder').style.display = 'none';
+                checkEncryptReady();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        encPassword.addEventListener('input', (e) => {
+            const val = e.target.value;
+            const bar = document.getElementById('strengthBar');
+            const fill = document.getElementById('strengthFill');
+            
+            if (val.length > 0) {
+                bar.classList.add('active');
+                let strength = 0;
+                if (val.length >= 6) strength++;
+                if (val.length >= 10) strength++;
+                if (/[A-Z]/.test(val)) strength++;
+                if (/[0-9]/.test(val)) strength++;
+                if (/[^A-Za-z0-9]/.test(val)) strength++;
+                
+                const colors = ['#ef4444', '#f59e0b', '#eab308', '#22c55e', '#10b981'];
+                fill.style.width = (strength * 20) + '%';
+                fill.style.background = colors[strength - 1] || '#ef4444';
+            } else {
+                bar.classList.remove('active');
+            }
+            checkEncryptReady();
+        });
+
+        function checkEncryptReady() {
+            encBtn.disabled = !(encFile && encPassword.value.length >= 6);
+        }
+
+        encBtn.addEventListener('click', async () => {
+            encBtn.innerHTML = '<div class="spinner"></div>';
+            encBtn.disabled = true;
+            document.getElementById('encryptProgress').classList.add('active');
+            
+            try {
+                // Read file
+                const fileData = await encFile.arrayBuffer();
+                
+                // Prepare metadata: [filenameLength (4 bytes)] [filename] [fileData]
+                const encoder = new TextEncoder();
+                const nameBytes = encoder.encode(encFile.name);
+                const nameLen = new Uint32Array([nameBytes.length]);
+                
+                const combined = new Uint8Array(4 + nameBytes.length + fileData.byteLength);
+                combined.set(new Uint8Array(nameLen.buffer), 0);
+                combined.set(nameBytes, 4);
+                combined.set(new Uint8Array(fileData), 4 + nameBytes.length);
+                
+                // Encrypt
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                const salt = crypto.getRandomValues(new Uint8Array(16));
+                const key = await deriveKey(encPassword.value, salt);
+                
+                const encrypted = await crypto.subtle.encrypt(
+                    { name: 'AES-GCM', iv }, key, combined
+                );
+                
+                // Final: [version (1)] [salt (16)] [iv (12)] [encrypted]
+                const version = new Uint8Array([1]);
+                const result = new Uint8Array(1 + 16 + 12 + encrypted.byteLength);
+                result.set(version, 0);
+                result.set(salt, 1);
+                result.set(iv, 17);
+                result.set(new Uint8Array(encrypted), 29);
+                
+                // Create download
+                const blob = new Blob([result], { type: 'application/octet-stream' });
+                if (encBlobUrl) URL.revokeObjectURL(encBlobUrl);
+                encBlobUrl = URL.createObjectURL(blob);
+                
+                const randomName = generateRandomName();
+                document.getElementById('encryptedFileName').textContent = randomName;
+                
+                document.getElementById('encryptDownloadBtn').onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = encBlobUrl;
+                    a.download = randomName;
+                    a.click();
+                };
+                
+                document.getElementById('encryptResult').classList.add('active');
+                document.getElementById('encryptProgress').classList.remove('active');
+                encBtn.innerHTML = '<span>✓ Selesai</span>';
+                
+            } catch (err) {
+                alert('Error: ' + err.message);
+                encBtn.innerHTML = '<span>🔐 Enkripsi Sekarang</span>';
+                encBtn.disabled = false;
+                document.getElementById('encryptProgress').classList.remove('active');
+            }
+        });
+
+        // DECRYPT LOGIC
+        const decDropZone = document.getElementById('decryptDropZone');
+        const decInput = document.getElementById('decryptInput');
+        const decPreview = document.getElementById('decryptPreview');
+        const decPassword = document.getElementById('decryptPassword');
+        const decBtn = document.getElementById('decryptBtn');
+        let decFile = null;
+        let decBlobUrl = null;
+        let originalName = '';
+
+        decDropZone.addEventListener('click', () => decInput.click());
+        
+        ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+            decDropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                if (eventName === 'dragover') decDropZone.style.borderColor = 'var(--primary)';
+                if (eventName === 'dragleave') decDropZone.style.borderColor = '';
+                if (eventName === 'drop' && e.dataTransfer.files.length) {
+                    handleDecryptFile(e.dataTransfer.files[0]);
+                    decDropZone.style.borderColor = '';
+                }
+            });
+        });
+
+        decInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleDecryptFile(e.target.files[0]);
+        });
+
+        function handleDecryptFile(file) {
+            decFile = file;
+            document.getElementById('decryptFileBadge').classList.remove('hidden');
+            document.getElementById('decryptFileNameShort').textContent = truncate(file.name, 20);
+            decDropZone.classList.add('has-file');
+            checkDecryptReady();
+        }
+
+        decPassword.addEventListener('input', () => {
+            document.getElementById('decryptError').classList.remove('active');
+            checkDecryptReady();
+        });
+
+        function checkDecryptReady() {
+            decBtn.disabled = !(decFile && decPassword.value.length > 0);
+        }
+
+        decBtn.addEventListener('click', async () => {
+            decBtn.innerHTML = '<div class="spinner"></div>';
+            decBtn.disabled = true;
+            document.getElementById('decryptProgress').classList.add('active');
+            document.getElementById('decryptResult').classList.remove('active');
+            document.getElementById('decryptError').classList.remove('active');
+            
+            try {
+                const data = new Uint8Array(await decFile.arrayBuffer());
+                
+                if (data[0] !== 1) throw new Error('Format tidak dikenali');
+                
+                const salt = data.slice(1, 17);
+                const iv = data.slice(17, 29);
+                const encrypted = data.slice(29);
+                
+                const key = await deriveKey(decPassword.value, salt);
+                const decrypted = await crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv }, key, encrypted
+                );
+                
+                // Parse: [nameLen (4)] [name] [fileData]
+                const decArray = new Uint8Array(decrypted);
+                const nameLen = new Uint32Array(decArray.slice(0, 4).buffer)[0];
+                const decoder = new TextDecoder();
+                originalName = decoder.decode(decArray.slice(4, 4 + nameLen));
+                const fileData = decArray.slice(4 + nameLen);
+                
+                // Detect mime type
+                const arr = fileData.slice(0, 4);
+                let mime = 'application/octet-stream';
+                if (arr[0] === 0xFF && arr[1] === 0xD8) mime = 'image/jpeg';
+                else if (arr[0] === 0x89 && arr[1] === 0x50) mime = 'image/png';
+                else if (arr[0] === 0x47 && arr[1] === 0x49) mime = 'image/gif';
+                else if (arr[0] === 0x52 && arr[1] === 0x49) mime = 'image/webp';
+                
+                // Show preview
+                const blob = new Blob([fileData], { type: mime });
+                if (decBlobUrl) URL.revokeObjectURL(decBlobUrl);
+                decBlobUrl = URL.createObjectURL(blob);
+                
+                decPreview.src = decBlobUrl;
+                decPreview.classList.add('active');
+                document.querySelector('#decryptPreviewBox .preview-placeholder').style.display = 'none';
+                
+                // Show result
+                document.getElementById('originalFileNameDisplay').textContent = originalName;
+                document.getElementById('decryptDownloadBtn').onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = decBlobUrl;
+                    a.download = originalName;
+                    a.click();
+                };
+                
+                document.getElementById('decryptResult').classList.add('active');
+                document.getElementById('decryptProgress').classList.remove('active');
+                decBtn.innerHTML = '<span>✓ Selesai</span>';
+                
+            } catch (err) {
+                document.getElementById('decryptError').classList.add('active');
+                decBtn.innerHTML = '<span>🔓 Dekripsi Sekarang</span>';
+                decBtn.disabled = false;
+                document.getElementById('decryptProgress').classList.remove('active');
+            }
+        });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (encBlobUrl) URL.revokeObjectURL(encBlobUrl);
+            if (decBlobUrl) URL.revokeObjectURL(decBlobUrl);
+        });
+    </script>
+</body>
+</html>
