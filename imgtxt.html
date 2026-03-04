@@ -255,11 +255,21 @@
             margin-left: 10px;
             vertical-align: middle;
         }
+        
+        .quality-badge {
+            display: inline-block;
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔄 Converter <span class="badge">PNG Optimized</span></h1>
+        <h1>🔄 Converter <span class="badge">JPEG HD</span></h1>
         
         <!-- ENCODE -->
         <div class="box">
@@ -271,7 +281,9 @@
                 <div id="encodePlaceholder">
                     <p style="font-size: 2.5rem; margin-bottom: 10px;">📁</p>
                     <p>Drop atau klik untuk pilih gambar</p>
-                    <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 8px;">Auto-optimasi jika >800KB</p>
+                    <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 8px;">
+                        JPEG Quality 90% <span class="quality-badge">HD</span> • Auto-resize jika >800KB
+                    </p>
                 </div>
                 
                 <img id="preview">
@@ -294,6 +306,10 @@
                 <div class="stats-row">
                     <span id="originalSize"></span>
                     <span id="finalSize"></span>
+                </div>
+                <div class="stats-row" id="dimensionRow" style="display: none;">
+                    <span id="originalDim"></span>
+                    <span id="finalDim"></span>
                 </div>
             </div>
             
@@ -347,6 +363,7 @@
 
     <script>
         const MAX_SIZE = 800 * 1024; // 800KB
+        const JPEG_QUALITY = 0.9; // High quality
         let txtBlob = null;
         let randomFilename = '';
         
@@ -373,7 +390,7 @@
             statusEl.textContent = status;
         }
         
-        // ========== ENCODE WITH COMPRESSION ==========
+        // ========== ENCODE WITH JPEG COMPRESSION ==========
         const fileInput = document.getElementById('fileInput');
         const preview = document.getElementById('preview');
         const encodeLoading = document.getElementById('encodeLoading');
@@ -394,55 +411,74 @@
             reader.onload = async (ev) => {
                 const img = new Image();
                 img.onload = async () => {
+                    const originalWidth = img.width;
+                    const originalHeight = img.height;
+                    
                     updateProgress('encode', 30, 'Memeriksa ukuran...');
                     await sleep(200);
                     
                     let finalDataUrl = ev.target.result;
                     let wasOptimized = false;
                     let finalSize = originalSize;
+                    let finalWidth = originalWidth;
+                    let finalHeight = originalHeight;
                     
-                    // Check if need optimization
+                    // Check if need optimization (file size > 800KB)
                     if (originalSize > MAX_SIZE) {
                         wasOptimized = true;
                         updateProgress('encode', 50, 'Mengoptimasi gambar...');
                         
-                        // Calculate scale to fit ~800KB
-                        // PNG size roughly proportional to pixel count
-                        const targetPixels = (MAX_SIZE / originalSize) * (img.width * img.height);
-                        const scale = Math.sqrt(targetPixels / (img.width * img.height));
+                        // Calculate scale to fit ~800KB with JPEG quality 0.9
+                        // JPEG size roughly proportional to pixel count at same quality
+                        const targetPixels = (MAX_SIZE / originalSize) * (originalWidth * originalHeight) * 0.85; // 0.85 buffer for safety
+                        const scale = Math.sqrt(targetPixels / (originalWidth * originalHeight));
                         
-                        let newWidth = Math.floor(img.width * scale);
-                        let newHeight = Math.floor(img.height * scale);
+                        // Calculate new dimensions (aspect ratio tetap)
+                        finalWidth = Math.floor(originalWidth * scale);
+                        finalHeight = Math.floor(originalHeight * scale);
                         
-                        // Ensure minimum dimensions
-                        newWidth = Math.max(newWidth, 800);
-                        newHeight = Math.max(newHeight, 600);
+                        // Minimum dimensions check (jangan terlalu kecil)
+                        const minDimension = 600;
+                        if (finalWidth < minDimension || finalHeight < minDimension) {
+                            const minScale = Math.max(minDimension / originalWidth, minDimension / originalHeight);
+                            finalWidth = Math.floor(originalWidth * minScale);
+                            finalHeight = Math.floor(originalHeight * minScale);
+                        }
                         
-                        // Create canvas
+                        // Create canvas with exact aspect ratio
                         const canvas = document.createElement('canvas');
-                        canvas.width = newWidth;
-                        canvas.height = newHeight;
+                        canvas.width = finalWidth;
+                        canvas.height = finalHeight;
                         
                         const ctx = canvas.getContext('2d');
                         ctx.imageSmoothingEnabled = true;
                         ctx.imageSmoothingQuality = 'high';
-                        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                        
+                        // Draw with proper aspect ratio (cover entire canvas)
+                        ctx.drawImage(img, 0, 0, finalWidth, finalHeight);
                         
                         await sleep(300);
-                        updateProgress('encode', 70, 'Mengkonversi ke PNG...');
+                        updateProgress('encode', 70, 'Mengkonversi ke JPEG (Q:90%)...');
                         
-                        // Get PNG data
-                        finalDataUrl = canvas.toDataURL('image/png');
-                        finalSize = Math.round((finalDataUrl.length * 3) / 4); // Approximate
+                        // Get JPEG with quality 0.9
+                        finalDataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
                         
-                        // If still too big, reduce more
-                        if (finalSize > MAX_SIZE) {
-                            const extraScale = Math.sqrt(MAX_SIZE / finalSize) * 0.9;
-                            canvas.width = Math.max(Math.floor(newWidth * extraScale), 600);
-                            canvas.height = Math.max(Math.floor(newHeight * extraScale), 400);
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            finalDataUrl = canvas.toDataURL('image/png');
+                        // Check actual size
+                        finalSize = Math.round((finalDataUrl.length * 3) / 4);
+                        
+                        // If still too big, reduce resolution more (tetap quality 0.9)
+                        let attempts = 0;
+                        while (finalSize > MAX_SIZE && attempts < 3) {
+                            const extraScale = 0.9; // Reduce 10% each attempt
+                            finalWidth = Math.floor(finalWidth * extraScale);
+                            finalHeight = Math.floor(finalHeight * extraScale);
+                            
+                            canvas.width = finalWidth;
+                            canvas.height = finalHeight;
+                            ctx.drawImage(img, 0, 0, finalWidth, finalHeight);
+                            finalDataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
                             finalSize = Math.round((finalDataUrl.length * 3) / 4);
+                            attempts++;
                         }
                     }
                     
@@ -475,12 +511,21 @@
                     document.getElementById('filenameText').textContent = `📄 ${randomFilename}`;
                     document.getElementById('originalSize').textContent = `Original: ${formatBytes(originalSize)}`;
                     document.getElementById('finalSize').textContent = wasOptimized ? 
-                        `Optimized: ${formatBytes(finalSize)}` : `Size: ${formatBytes(finalSize)}`;
-                    nameDisplay.classList.remove('hidden');
+                        `JPEG Q90%: ${formatBytes(finalSize)}` : `Size: ${formatBytes(finalSize)}`;
                     
+                    // Show dimensions if optimized
+                    if (wasOptimized) {
+                        document.getElementById('dimensionRow').style.display = 'flex';
+                        document.getElementById('originalDim').textContent = `${originalWidth}×${originalHeight}`;
+                        document.getElementById('finalDim').textContent = `${finalWidth}×${finalHeight}`;
+                    }
+                    
+                    nameDisplay.classList.remove('hidden');
                     document.getElementById('shareBtn').classList.remove('hidden');
                     
-                    showToast(wasOptimized ? '✅ Gambar dioptimasi & diconvert!' : '✅ Berhasil convert!');
+                    showToast(wasOptimized ? 
+                        `✅ Dioptimasi: ${originalWidth}×${originalHeight} → ${finalWidth}×${finalHeight}` : 
+                        '✅ Berhasil convert!');
                 };
                 
                 img.onerror = () => {
@@ -508,19 +553,18 @@
                 try {
                     await navigator.share({ files: [file], title: 'File', text: randomFilename });
                 } catch (err) {
-                    if (err.name !== 'AbortError') {
-                        txtBlob.text().then(text => {
-                            navigator.clipboard.writeText(text.substring(0, 50000));
-                            showToast('📋 Isi file dicopy (50KB pertama)');
-                        });
-                    }
+                    if (err.name !== 'AbortError') fallbackShare();
                 }
             } else {
-                txtBlob.text().then(text => {
-                    navigator.clipboard.writeText(text.substring(0, 50000));
-                    showToast('📋 Isi file dicopy (50KB pertama)');
-                });
+                fallbackShare();
             }
+        }
+        
+        function fallbackShare() {
+            txtBlob.text().then(text => {
+                navigator.clipboard.writeText(text.substring(0, 50000));
+                showToast('📋 Isi file dicopy (50KB pertama)');
+            });
         }
         
         // ========== DECODE ==========
@@ -574,7 +618,7 @@
             
             let imageSrc = code;
             if (!code.startsWith('data:')) {
-                imageSrc = 'data:image/png;base64,' + code;
+                imageSrc = 'data:image/jpeg;base64,' + code;
             }
             
             // Animate progress
@@ -608,7 +652,7 @@
         function downloadResult() {
             const a = document.createElement('a');
             a.href = resultImg.src;
-            a.download = 'restored.png';
+            a.download = 'restored.jpg';
             a.click();
             showToast('💾 Gambar tersimpan');
         }
@@ -644,7 +688,7 @@
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
-            toast.classListy.add('show');
+            toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
     </script>
