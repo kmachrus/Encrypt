@@ -45,6 +45,8 @@
             text-align: center;
             cursor: pointer;
             transition: 0.3s;
+            position: relative;
+            overflow: hidden;
         }
         
         .drop-zone:hover {
@@ -143,66 +145,85 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.9);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 10;
-            border-radius: 8px;
+            border-radius: 12px;
         }
         
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255,255,255,0.1);
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255,255,255,0.1);
             border-top-color: #4ade80;
+            border-right-color: #4ade80;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
         
+        .progress-container {
+            width: 80%;
+            max-width: 250px;
+            text-align: center;
+        }
+        
         .progress-text {
-            font-size: 1.5rem;
+            font-size: 2rem;
             font-weight: bold;
             color: #4ade80;
             font-family: monospace;
+            margin-bottom: 10px;
         }
         
         .progress-bar {
-            width: 200px;
-            height: 6px;
+            width: 100%;
+            height: 8px;
             background: rgba(255,255,255,0.1);
-            border-radius: 3px;
-            margin-top: 10px;
+            border-radius: 4px;
             overflow: hidden;
+            box-shadow: 0 0 10px rgba(74,222,128,0.2);
         }
         
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #4ade80, #22c55e);
             width: 0%;
-            transition: width 0.2s ease;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(74,222,128,0.5);
         }
         
         .loading-status {
-            font-size: 0.85rem;
-            opacity: 0.7;
-            margin-top: 8px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 12px;
+            font-weight: 500;
         }
         
         .filename-display {
             background: rgba(0,0,0,0.3);
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 10px 15px;
+            border-radius: 8px;
             font-family: monospace;
-            font-size: 0.8rem;
-            margin-top: 10px;
+            font-size: 0.85rem;
+            margin-top: 15px;
             word-break: break-all;
+            border-left: 3px solid #4ade80;
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 5px;
         }
         
         .toast {
@@ -212,30 +233,70 @@
             transform: translateX(-50%) translateY(100px);
             background: #000;
             color: #4ade80;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 15px 30px;
+            border-radius: 10px;
             transition: 0.3s;
             z-index: 1000;
+            font-weight: 600;
         }
         
         .toast.show {
             transform: translateX(-50%) translateY(0);
         }
+        
+        .badge {
+            display: inline-block;
+            background: #25d366;
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔄 Converter</h1>
+        <h1>🔄 Converter <span class="badge">PNG Optimized</span></h1>
         
         <!-- ENCODE -->
         <div class="box">
             <h3 style="margin-bottom: 15px;">📁 → 📄 Convert</h3>
-            <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+            
+            <div class="drop-zone" id="encodeZone" onclick="document.getElementById('fileInput').click()">
                 <input type="file" id="fileInput" accept="image/*">
-                <p>Drop atau klik untuk pilih file</p>
+                
+                <div id="encodePlaceholder">
+                    <p style="font-size: 2.5rem; margin-bottom: 10px;">📁</p>
+                    <p>Drop atau klik untuk pilih gambar</p>
+                    <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 8px;">Auto-optimasi jika >800KB</p>
+                </div>
+                
                 <img id="preview">
+                
+                <!-- Loading Overlay Encode -->
+                <div class="loading-overlay hidden" id="encodeLoading">
+                    <div class="spinner"></div>
+                    <div class="progress-container">
+                        <div class="progress-text" id="encodeProgressText">0%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="encodeProgressFill"></div>
+                        </div>
+                        <div class="loading-status" id="encodeStatus">Membaca file...</div>
+                    </div>
+                </div>
             </div>
-            <div class="filename-display hidden" id="filenameDisplay"></div>
+            
+            <div class="filename-display hidden" id="filenameDisplay">
+                <div id="filenameText"></div>
+                <div class="stats-row">
+                    <span id="originalSize"></span>
+                    <span id="finalSize"></span>
+                </div>
+            </div>
+            
             <button class="btn hidden" id="shareBtn" onclick="shareFile()">📤 Share</button>
         </div>
         
@@ -245,18 +306,18 @@
             
             <div class="drop-zone" onclick="document.getElementById('txtInput').click()">
                 <input type="file" id="txtInput" accept=".txt">
-                <p>Drop atau klik untuk upload .txt</p>
+                <p>📄 Drop atau klik untuk upload .txt</p>
             </div>
             
             <div class="divider">— atau paste kode —</div>
             
-            <textarea id="codeInput" placeholder="Paste kode di sini..."></textarea>
+            <textarea id="codeInput" placeholder="Paste kode Base64 di sini..."></textarea>
             
             <div class="input-group">
                 <button class="btn btn-small btn-secondary" onclick="pasteFromClipboard()" style="flex: 1;">
                     📋 Paste
                 </button>
-                <button class="btn btn-small" id="convertBtn" onclick="startConvert()" style="flex: 2;">
+                <button class="btn btn-small" id="convertBtn" onclick="startDecode()" style="flex: 2;">
                     🔄 Proses
                 </button>
             </div>
@@ -265,24 +326,27 @@
                 <p style="opacity: 0.5;" id="placeholderText">Hasil muncul di sini</p>
                 <img id="resultImg">
                 
-                <!-- Loading Overlay -->
-                <div class="loading-overlay hidden" id="loadingOverlay">
+                <!-- Loading Overlay Decode -->
+                <div class="loading-overlay hidden" id="decodeLoading">
                     <div class="spinner"></div>
-                    <div class="progress-text" id="progressText">0%</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
+                    <div class="progress-container">
+                        <div class="progress-text" id="decodeProgressText">0%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="decodeProgressFill"></div>
+                        </div>
+                        <div class="loading-status" id="decodeStatus">Memvalidasi kode...</div>
                     </div>
-                    <div class="loading-status" id="loadingStatus">Memuat...</div>
                 </div>
             </div>
             
-            <button class="btn btn-secondary hidden" id="dlBtn" onclick="downloadResult()">💾 Simpan</button>
+            <button class="btn btn-secondary hidden" id="dlBtn" onclick="downloadResult()">💾 Simpan Gambar</button>
         </div>
     </div>
     
     <div class="toast" id="toast"></div>
 
     <script>
+        const MAX_SIZE = 800 * 1024; // 800KB
         let txtBlob = null;
         let randomFilename = '';
         
@@ -295,37 +359,143 @@
             return result + '.txt';
         }
         
-        // ========== ENCODE ==========
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        function updateProgress(loadingType, percent, status) {
+            const textEl = document.getElementById(loadingType + 'ProgressText');
+            const fillEl = document.getElementById(loadingType + 'ProgressFill');
+            const statusEl = document.getElementById(loadingType + 'Status');
+            
+            textEl.textContent = percent + '%';
+            fillEl.style.width = percent + '%';
+            statusEl.textContent = status;
+        }
+        
+        // ========== ENCODE WITH COMPRESSION ==========
         const fileInput = document.getElementById('fileInput');
         const preview = document.getElementById('preview');
+        const encodeLoading = document.getElementById('encodeLoading');
         
-        fileInput.addEventListener('change', (e) => {
+        fileInput.addEventListener('change', async (e) => {
             if (!e.target.files[0]) return;
             
             const file = e.target.files[0];
             randomFilename = generateRandomName();
             
+            // Show loading
+            encodeLoading.classList.remove('hidden');
+            updateProgress('encode', 10, 'Membaca file...');
+            
+            const originalSize = file.size;
+            
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                txtBlob = new Blob([ev.target.result], { type: 'text/plain' });
+            reader.onload = async (ev) => {
+                const img = new Image();
+                img.onload = async () => {
+                    updateProgress('encode', 30, 'Memeriksa ukuran...');
+                    await sleep(200);
+                    
+                    let finalDataUrl = ev.target.result;
+                    let wasOptimized = false;
+                    let finalSize = originalSize;
+                    
+                    // Check if need optimization
+                    if (originalSize > MAX_SIZE) {
+                        wasOptimized = true;
+                        updateProgress('encode', 50, 'Mengoptimasi gambar...');
+                        
+                        // Calculate scale to fit ~800KB
+                        // PNG size roughly proportional to pixel count
+                        const targetPixels = (MAX_SIZE / originalSize) * (img.width * img.height);
+                        const scale = Math.sqrt(targetPixels / (img.width * img.height));
+                        
+                        let newWidth = Math.floor(img.width * scale);
+                        let newHeight = Math.floor(img.height * scale);
+                        
+                        // Ensure minimum dimensions
+                        newWidth = Math.max(newWidth, 800);
+                        newHeight = Math.max(newHeight, 600);
+                        
+                        // Create canvas
+                        const canvas = document.createElement('canvas');
+                        canvas.width = newWidth;
+                        canvas.height = newHeight;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                        
+                        await sleep(300);
+                        updateProgress('encode', 70, 'Mengkonversi ke PNG...');
+                        
+                        // Get PNG data
+                        finalDataUrl = canvas.toDataURL('image/png');
+                        finalSize = Math.round((finalDataUrl.length * 3) / 4); // Approximate
+                        
+                        // If still too big, reduce more
+                        if (finalSize > MAX_SIZE) {
+                            const extraScale = Math.sqrt(MAX_SIZE / finalSize) * 0.9;
+                            canvas.width = Math.max(Math.floor(newWidth * extraScale), 600);
+                            canvas.height = Math.max(Math.floor(newHeight * extraScale), 400);
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            finalDataUrl = canvas.toDataURL('image/png');
+                            finalSize = Math.round((finalDataUrl.length * 3) / 4);
+                        }
+                    }
+                    
+                    updateProgress('encode', 90, 'Menyiapkan file...');
+                    await sleep(200);
+                    
+                    // Create blob and download
+                    txtBlob = new Blob([finalDataUrl], { type: 'text/plain' });
+                    
+                    const url = URL.createObjectURL(txtBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = randomFilename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    updateProgress('encode', 100, 'Selesai!');
+                    await sleep(300);
+                    
+                    // Hide loading, show result
+                    encodeLoading.classList.add('hidden');
+                    preview.src = finalDataUrl;
+                    preview.style.display = 'block';
+                    document.getElementById('encodePlaceholder').style.display = 'none';
+                    
+                    // Show filename with stats
+                    const nameDisplay = document.getElementById('filenameDisplay');
+                    document.getElementById('filenameText').textContent = `📄 ${randomFilename}`;
+                    document.getElementById('originalSize').textContent = `Original: ${formatBytes(originalSize)}`;
+                    document.getElementById('finalSize').textContent = wasOptimized ? 
+                        `Optimized: ${formatBytes(finalSize)}` : `Size: ${formatBytes(finalSize)}`;
+                    nameDisplay.classList.remove('hidden');
+                    
+                    document.getElementById('shareBtn').classList.remove('hidden');
+                    
+                    showToast(wasOptimized ? '✅ Gambar dioptimasi & diconvert!' : '✅ Berhasil convert!');
+                };
                 
-                const url = URL.createObjectURL(txtBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = randomFilename;
-                a.click();
-                URL.revokeObjectURL(url);
+                img.onerror = () => {
+                    encodeLoading.classList.add('hidden');
+                    showToast('❌ Gagal membaca gambar');
+                };
                 
-                preview.src = ev.target.result;
-                preview.style.display = 'block';
-                
-                const nameDisplay = document.getElementById('filenameDisplay');
-                nameDisplay.textContent = `📄 ${randomFilename}`;
-                nameDisplay.classList.remove('hidden');
-                
-                document.getElementById('shareBtn').classList.remove('hidden');
-                showToast('✅ Berhasil convert!');
+                img.src = ev.target.result;
             };
+            
+            reader.onerror = () => {
+                encodeLoading.classList.add('hidden');
+                showToast('❌ Gagal membaca file');
+            };
+            
             reader.readAsDataURL(file);
         });
         
@@ -336,30 +506,29 @@
             
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
-                    await navigator.share({
-                        files: [file],
-                        title: 'File',
-                        text: randomFilename
-                    });
+                    await navigator.share({ files: [file], title: 'File', text: randomFilename });
                 } catch (err) {
-                    if (err.name !== 'AbortError') showToast('❌ Gagal share');
+                    if (err.name !== 'AbortError') {
+                        txtBlob.text().then(text => {
+                            navigator.clipboard.writeText(text.substring(0, 50000));
+                            showToast('📋 Isi file dicopy (50KB pertama)');
+                        });
+                    }
                 }
             } else {
-                const text = await txtBlob.text();
-                navigator.clipboard.writeText(text);
-                showToast('📋 Tersalin ke clipboard');
+                txtBlob.text().then(text => {
+                    navigator.clipboard.writeText(text.substring(0, 50000));
+                    showToast('📋 Isi file dicopy (50KB pertama)');
+                });
             }
         }
         
-        // ========== DECODE WITH LOADING ==========
+        // ========== DECODE ==========
         const txtInput = document.getElementById('txtInput');
         const resultImg = document.getElementById('resultImg');
         const previewArea = document.getElementById('previewArea');
         const codeInput = document.getElementById('codeInput');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const progressText = document.getElementById('progressText');
-        const progressFill = document.getElementById('progressFill');
-        const loadingStatus = document.getElementById('loadingStatus');
+        const decodeLoading = document.getElementById('decodeLoading');
         const convertBtn = document.getElementById('convertBtn');
         
         txtInput.addEventListener('change', (e) => {
@@ -368,7 +537,7 @@
             const reader = new FileReader();
             reader.onload = (ev) => {
                 codeInput.value = ev.target.result.trim();
-                startConvert();
+                startDecode();
             };
             reader.readAsText(e.target.files[0]);
         });
@@ -378,29 +547,22 @@
                 const text = await navigator.clipboard.readText();
                 codeInput.value = text;
                 showToast('📋 Tersalin');
-                startConvert();
+                startDecode();
             } catch (err) {
                 showToast('❌ Gagal akses clipboard');
             }
         }
         
-        async function startConvert() {
+        async function startDecode() {
             const code = codeInput.value.trim();
             if (!code) {
                 showToast('❌ Masukkan kode!');
                 return;
             }
             
-            // Show loading
-            loadingOverlay.classList.remove('hidden');
+            decodeLoading.classList.remove('hidden');
             convertBtn.disabled = true;
             
-            let imageSrc = code;
-            if (!code.startsWith('data:')) {
-                imageSrc = 'data:image/png;base64,' + code;
-            }
-            
-            // Simulate progress steps
             const steps = [
                 { percent: 10, status: 'Memvalidasi kode...' },
                 { percent: 25, status: 'Memparsing data...' },
@@ -410,13 +572,17 @@
                 { percent: 100, status: 'Selesai!' }
             ];
             
-            // Animate progress
-            for (let step of steps) {
-                await sleep(150);
-                updateProgress(step.percent, step.status);
+            let imageSrc = code;
+            if (!code.startsWith('data:')) {
+                imageSrc = 'data:image/png;base64,' + code;
             }
             
-            // Actually load image
+            // Animate progress
+            for (let step of steps) {
+                updateProgress('decode', step.percent, step.status);
+                await sleep(120);
+            }
+            
             resultImg.src = imageSrc;
             
             resultImg.onload = () => {
@@ -425,29 +591,18 @@
                 previewArea.style.border = '2px solid #4ade80';
                 document.getElementById('dlBtn').classList.remove('hidden');
                 
-                // Hide loading after short delay
                 setTimeout(() => {
-                    loadingOverlay.classList.add('hidden');
+                    decodeLoading.classList.add('hidden');
                     convertBtn.disabled = false;
                     showToast('✅ Berhasil restore!');
                 }, 300);
             };
             
             resultImg.onerror = () => {
-                loadingOverlay.classList.add('hidden');
+                decodeLoading.classList.add('hidden');
                 convertBtn.disabled = false;
                 showToast('❌ Kode tidak valid');
             };
-        }
-        
-        function updateProgress(percent, status) {
-            progressText.textContent = percent + '%';
-            progressFill.style.width = percent + '%';
-            loadingStatus.textContent = status;
-        }
-        
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
         }
         
         function downloadResult() {
@@ -455,7 +610,7 @@
             a.href = resultImg.src;
             a.download = 'restored.png';
             a.click();
-            showToast('💾 Tersimpan');
+            showToast('💾 Gambar tersimpan');
         }
         
         // ========== DRAG DROP ==========
@@ -478,10 +633,18 @@
             });
         });
         
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+        
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
-            toast.classList.add('show');
+            toast.classListy.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
     </script>
