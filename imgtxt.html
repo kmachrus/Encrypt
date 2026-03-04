@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image ↔ TXT Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+        
+        .box {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .drop-zone {
+            border: 3px dashed rgba(255,255,255,0.3);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .drop-zone:hover {
+            border-color: #4ade80;
+            background: rgba(74,222,128,0.1);
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            display: none;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            background: #4ade80;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            font-size: 1rem;
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        
+        .preview-area {
+            min-height: 150px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            border: 2px dashed rgba(255,255,255,0.1);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #000;
+            color: #4ade80;
+            padding: 12px 24px;
+            border-radius: 8px;
+            transition: 0.3s;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ ↔ 📄 Image TXT Converter</h1>
+        
+        <!-- IMAGE TO TXT -->
+        <div class="box">
+            <h3 style="margin-bottom: 15px;">Gambar → File TXT</h3>
+            <div class="drop-zone" onclick="document.getElementById('imgInput').click()">
+                <input type="file" id="imgInput" accept="image/*">
+                <p>📁 Klik atau drop gambar di sini</p>
+                <img id="imgPreview">
+            </div>
+            <button class="btn hidden" id="shareBtn" onclick="shareFile()">📤 Share File</button>
+        </div>
+        
+        <!-- TXT TO IMAGE -->
+        <div class="box">
+            <h3 style="margin-bottom: 15px;">File TXT → Gambar</h3>
+            <div class="drop-zone" onclick="document.getElementById('txtInput').click()">
+                <input type="file" id="txtInput" accept=".txt">
+                <p>📄 Klik atau drop file .txt di sini</p>
+            </div>
+            <div class="preview-area" id="previewArea">
+                <p style="opacity: 0.5;">Gambar akan muncul di sini</p>
+                <img id="resultImg">
+            </div>
+            <button class="btn btn-secondary hidden" id="dlBtn" onclick="downloadImage()">💾 Download Gambar</button>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let txtBlob = null;
+        let currentFileName = 'image.txt';
+        
+        // IMAGE TO TXT
+        const imgInput = document.getElementById('imgInput');
+        const imgPreview = document.getElementById('imgPreview');
+        
+        imgInput.addEventListener('change', (e) => {
+            if (!e.target.files[0]) return;
+            
+            const file = e.target.files[0];
+            currentFileName = file.name.replace(/\.[^/.]+$/, '') + '.txt';
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                // Create TXT file
+                txtBlob = new Blob([ev.target.result], { type: 'text/plain' });
+                
+                // Auto download
+                const url = URL.createObjectURL(txtBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = currentFileName;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                // Show preview
+                imgPreview.src = ev.target.result;
+                imgPreview.style.display = 'block';
+                
+                // Show share button
+                document.getElementById('shareBtn').classList.remove('hidden');
+                
+                showToast('✅ File .txt berhasil dibuat & didownload!');
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        async function shareFile() {
+            if (!txtBlob) return;
+            
+            const file = new File([txtBlob], currentFileName, { type: 'text/plain' });
+            
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Image Code',
+                        text: 'File gambar dalam format TXT'
+                    });
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        showToast('❌ Gagal share');
+                    }
+                }
+            } else {
+                // Fallback: copy to clipboard
+                const text = await txtBlob.text();
+                navigator.clipboard.writeText(text);
+                showToast('📋 Isi file dicopy (browser tidak support file share)');
+            }
+        }
+        
+        // TXT TO IMAGE
+        const txtInput = document.getElementById('txtInput');
+        const resultImg = document.getElementById('resultImg');
+        const previewArea = document.getElementById('previewArea');
+        
+        txtInput.addEventListener('change', (e) => {
+            if (!e.target.files[0]) return;
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const code = ev.target.result.trim();
+                
+                resultImg.src = code;
+                resultImg.onload = () => {
+                    resultImg.style.display = 'block';
+                    previewArea.querySelector('p').style.display = 'none';
+                    previewArea.style.border = '2px solid #4ade80';
+                    document.getElementById('dlBtn').classList.remove('hidden');
+                    showToast('✅ Gambar berhasil dibuat!');
+                };
+                resultImg.onerror = () => {
+                    showToast('❌ File TXT tidak valid');
+                };
+            };
+            reader.readAsText(e.target.files[0]);
+        });
+        
+        function downloadImage() {
+            const a = document.createElement('a');
+            a.href = resultImg.src;
+            a.download = 'decoded-image.png';
+            a.click();
+            showToast('💾 Gambar didownload!');
+        }
+        
+        // Drag & drop support
+        document.querySelectorAll('.drop-zone').forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.style.borderColor = '#4ade80';
+            });
+            zone.addEventListener('dragleave', () => {
+                zone.style.borderColor = 'rgba(255,255,255,0.3)';
+            });
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.style.borderColor = 'rgba(255,255,255,0.3)';
+                const input = zone.querySelector('input');
+                if (e.dataTransfer.files[0]) {
+                    input.files = e.dataTransfer.files;
+                    input.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+        
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>
