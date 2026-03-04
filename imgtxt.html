@@ -63,6 +63,20 @@
             margin-top: 15px;
         }
         
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            color: #4ade80;
+            font-family: monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+            margin-top: 10px;
+        }
+        
         .btn {
             background: #4ade80;
             color: #000;
@@ -72,13 +86,18 @@
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-            margin-top: 15px;
+            margin-top: 10px;
             font-size: 1rem;
         }
         
         .btn-secondary {
             background: rgba(255,255,255,0.2);
             color: #fff;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9rem;
         }
         
         .preview-area {
@@ -90,6 +109,23 @@
             justify-content: center;
             margin-top: 15px;
             border: 2px dashed rgba(255,255,255,0.1);
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 15px 0;
+            opacity: 0.6;
+            font-size: 0.9rem;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .hidden {
+            display: none !important;
         }
         
         .toast {
@@ -127,15 +163,33 @@
         
         <!-- TXT TO IMAGE -->
         <div class="box">
-            <h3 style="margin-bottom: 15px;">File TXT → Gambar</h3>
+            <h3 style="margin-bottom: 15px;">Kode / File TXT → Gambar</h3>
+            
+            <!-- Upload File -->
             <div class="drop-zone" onclick="document.getElementById('txtInput').click()">
                 <input type="file" id="txtInput" accept=".txt">
                 <p>📄 Klik atau drop file .txt di sini</p>
             </div>
+            
+            <div class="divider">— atau paste kode manual —</div>
+            
+            <!-- Paste Manual -->
+            <textarea id="codeInput" placeholder="Paste kode Base64 di sini..."></textarea>
+            
+            <div class="input-group">
+                <button class="btn btn-small btn-secondary" onclick="pasteFromClipboard()" style="flex: 1;">
+                    📋 Paste
+                </button>
+                <button class="btn btn-small" onclick="convertCode()" style="flex: 2;">
+                    🔄 Jadikan Gambar
+                </button>
+            </div>
+            
             <div class="preview-area" id="previewArea">
                 <p style="opacity: 0.5;">Gambar akan muncul di sini</p>
                 <img id="resultImg">
             </div>
+            
             <button class="btn btn-secondary hidden" id="dlBtn" onclick="downloadImage()">💾 Download Gambar</button>
         </div>
     </div>
@@ -146,7 +200,7 @@
         let txtBlob = null;
         let currentFileName = 'image.txt';
         
-        // IMAGE TO TXT
+        // ========== IMAGE TO TXT ==========
         const imgInput = document.getElementById('imgInput');
         const imgPreview = document.getElementById('imgPreview');
         
@@ -206,32 +260,66 @@
             }
         }
         
-        // TXT TO IMAGE
+        // ========== TXT TO IMAGE ==========
         const txtInput = document.getElementById('txtInput');
         const resultImg = document.getElementById('resultImg');
         const previewArea = document.getElementById('previewArea');
+        const codeInput = document.getElementById('codeInput');
         
+        // File upload
         txtInput.addEventListener('change', (e) => {
             if (!e.target.files[0]) return;
             
             const reader = new FileReader();
             reader.onload = (ev) => {
-                const code = ev.target.result.trim();
-                
-                resultImg.src = code;
-                resultImg.onload = () => {
-                    resultImg.style.display = 'block';
-                    previewArea.querySelector('p').style.display = 'none';
-                    previewArea.style.border = '2px solid #4ade80';
-                    document.getElementById('dlBtn').classList.remove('hidden');
-                    showToast('✅ Gambar berhasil dibuat!');
-                };
-                resultImg.onerror = () => {
-                    showToast('❌ File TXT tidak valid');
-                };
+                codeInput.value = ev.target.result.trim();
+                convertCode();
             };
             reader.readAsText(e.target.files[0]);
         });
+        
+        // Paste from clipboard
+        async function pasteFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                codeInput.value = text;
+                showToast('📋 Dipaste dari clipboard!');
+                convertCode();
+            } catch (err) {
+                showToast('❌ Tidak bisa akses clipboard');
+            }
+        }
+        
+        // Convert code to image
+        function convertCode() {
+            const code = codeInput.value.trim();
+            
+            if (!code) {
+                showToast('❌ Masukkan kode terlebih dahulu!');
+                return;
+            }
+            
+            // Validate base64
+            let imageSrc = code;
+            if (!code.startsWith('data:image')) {
+                // Try to add prefix if missing
+                if (code.match(/^[A-Za-z0-9+/]*={0,2}$/)) {
+                    imageSrc = 'data:image/png;base64,' + code;
+                }
+            }
+            
+            resultImg.src = imageSrc;
+            resultImg.onload = () => {
+                resultImg.style.display = 'block';
+                previewArea.querySelector('p').style.display = 'none';
+                previewArea.style.border = '2px solid #4ade80';
+                document.getElementById('dlBtn').classList.remove('hidden');
+                showToast('✅ Gambar berhasil dibuat!');
+            };
+            resultImg.onerror = () => {
+                showToast('❌ Kode tidak valid atau rusak!');
+            };
+        }
         
         function downloadImage() {
             const a = document.createElement('a');
@@ -241,7 +329,7 @@
             showToast('💾 Gambar didownload!');
         }
         
-        // Drag & drop support
+        // ========== DRAG & DROP ==========
         document.querySelectorAll('.drop-zone').forEach(zone => {
             zone.addEventListener('dragover', (e) => {
                 e.preventDefault();
