@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image ↔ TXT Converter</title>
+    <title>Converter</title>
     <style>
         * {
             margin: 0;
@@ -144,53 +144,62 @@
         .toast.show {
             transform: translateX(-50%) translateY(0);
         }
+        
+        .filename-display {
+            background: rgba(0,0,0,0.3);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🖼️ ↔ 📄 Image TXT Converter</h1>
+        <h1>🔄 Converter</h1>
         
-        <!-- IMAGE TO TXT -->
+        <!-- ENCODE -->
         <div class="box">
-            <h3 style="margin-bottom: 15px;">Gambar → File TXT</h3>
-            <div class="drop-zone" onclick="document.getElementById('imgInput').click()">
-                <input type="file" id="imgInput" accept="image/*">
-                <p>📁 Klik atau drop gambar di sini</p>
-                <img id="imgPreview">
+            <h3 style="margin-bottom: 15px;">📁 → 📄 Convert</h3>
+            <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" accept="image/*">
+                <p>Drop atau klik untuk pilih file</p>
+                <img id="preview">
             </div>
-            <button class="btn hidden" id="shareBtn" onclick="shareFile()">📤 Share File</button>
+            <div class="filename-display hidden" id="filenameDisplay"></div>
+            <button class="btn hidden" id="shareBtn" onclick="shareFile()">📤 Share</button>
         </div>
         
-        <!-- TXT TO IMAGE -->
+        <!-- DECODE -->
         <div class="box">
-            <h3 style="margin-bottom: 15px;">Kode / File TXT → Gambar</h3>
+            <h3 style="margin-bottom: 15px;">📄 → 🖼️ Restore</h3>
             
-            <!-- Upload File -->
             <div class="drop-zone" onclick="document.getElementById('txtInput').click()">
                 <input type="file" id="txtInput" accept=".txt">
-                <p>📄 Klik atau drop file .txt di sini</p>
+                <p>Drop atau klik untuk upload .txt</p>
             </div>
             
-            <div class="divider">— atau paste kode manual —</div>
+            <div class="divider">— atau paste kode —</div>
             
-            <!-- Paste Manual -->
-            <textarea id="codeInput" placeholder="Paste kode Base64 di sini..."></textarea>
+            <textarea id="codeInput" placeholder="Paste kode di sini..."></textarea>
             
             <div class="input-group">
                 <button class="btn btn-small btn-secondary" onclick="pasteFromClipboard()" style="flex: 1;">
                     📋 Paste
                 </button>
                 <button class="btn btn-small" onclick="convertCode()" style="flex: 2;">
-                    🔄 Jadikan Gambar
+                    🔄 Proses
                 </button>
             </div>
             
             <div class="preview-area" id="previewArea">
-                <p style="opacity: 0.5;">Gambar akan muncul di sini</p>
+                <p style="opacity: 0.5;">Hasil muncul di sini</p>
                 <img id="resultImg">
             </div>
             
-            <button class="btn btn-secondary hidden" id="dlBtn" onclick="downloadImage()">💾 Download Gambar</button>
+            <button class="btn btn-secondary hidden" id="dlBtn" onclick="downloadResult()">💾 Simpan</button>
         </div>
     </div>
     
@@ -198,39 +207,56 @@
 
     <script>
         let txtBlob = null;
-        let currentFileName = 'image.txt';
+        let randomFilename = '';
         
-        // ========== IMAGE TO TXT ==========
-        const imgInput = document.getElementById('imgInput');
-        const imgPreview = document.getElementById('imgPreview');
+        // Generate random filename (8 chars, letters + numbers)
+        function generateRandomName() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 8; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result + '.txt';
+        }
         
-        imgInput.addEventListener('change', (e) => {
+        // ========== ENCODE ==========
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        
+        fileInput.addEventListener('change', (e) => {
             if (!e.target.files[0]) return;
             
             const file = e.target.files[0];
-            currentFileName = file.name.replace(/\.[^/.]+$/, '') + '.txt';
+            
+            // Generate random filename
+            randomFilename = generateRandomName();
             
             const reader = new FileReader();
             reader.onload = (ev) => {
-                // Create TXT file
+                // Create blob
                 txtBlob = new Blob([ev.target.result], { type: 'text/plain' });
                 
-                // Auto download
+                // Auto download with random name
                 const url = URL.createObjectURL(txtBlob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = currentFileName;
+                a.download = randomFilename;
                 a.click();
                 URL.revokeObjectURL(url);
                 
                 // Show preview
-                imgPreview.src = ev.target.result;
-                imgPreview.style.display = 'block';
+                preview.src = ev.target.result;
+                preview.style.display = 'block';
+                
+                // Show filename
+                const nameDisplay = document.getElementById('filenameDisplay');
+                nameDisplay.textContent = `📄 ${randomFilename}`;
+                nameDisplay.classList.remove('hidden');
                 
                 // Show share button
                 document.getElementById('shareBtn').classList.remove('hidden');
                 
-                showToast('✅ File .txt berhasil dibuat & didownload!');
+                showToast('✅ Berhasil convert!');
             };
             reader.readAsDataURL(file);
         });
@@ -238,14 +264,14 @@
         async function shareFile() {
             if (!txtBlob) return;
             
-            const file = new File([txtBlob], currentFileName, { type: 'text/plain' });
+            const file = new File([txtBlob], randomFilename, { type: 'text/plain' });
             
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({
                         files: [file],
-                        title: 'Image Code',
-                        text: 'File gambar dalam format TXT'
+                        title: 'File',
+                        text: randomFilename
                     });
                 } catch (err) {
                     if (err.name !== 'AbortError') {
@@ -253,20 +279,18 @@
                     }
                 }
             } else {
-                // Fallback: copy to clipboard
                 const text = await txtBlob.text();
                 navigator.clipboard.writeText(text);
-                showToast('📋 Isi file dicopy (browser tidak support file share)');
+                showToast('📋 Tersalin ke clipboard');
             }
         }
         
-        // ========== TXT TO IMAGE ==========
+        // ========== DECODE ==========
         const txtInput = document.getElementById('txtInput');
         const resultImg = document.getElementById('resultImg');
         const previewArea = document.getElementById('previewArea');
         const codeInput = document.getElementById('codeInput');
         
-        // File upload
         txtInput.addEventListener('change', (e) => {
             if (!e.target.files[0]) return;
             
@@ -278,34 +302,27 @@
             reader.readAsText(e.target.files[0]);
         });
         
-        // Paste from clipboard
         async function pasteFromClipboard() {
             try {
                 const text = await navigator.clipboard.readText();
                 codeInput.value = text;
-                showToast('📋 Dipaste dari clipboard!');
+                showToast('📋 Tersalin');
                 convertCode();
             } catch (err) {
-                showToast('❌ Tidak bisa akses clipboard');
+                showToast('❌ Gagal akses clipboard');
             }
         }
         
-        // Convert code to image
         function convertCode() {
             const code = codeInput.value.trim();
-            
             if (!code) {
-                showToast('❌ Masukkan kode terlebih dahulu!');
+                showToast('❌ Masukkan kode!');
                 return;
             }
             
-            // Validate base64
             let imageSrc = code;
-            if (!code.startsWith('data:image')) {
-                // Try to add prefix if missing
-                if (code.match(/^[A-Za-z0-9+/]*={0,2}$/)) {
-                    imageSrc = 'data:image/png;base64,' + code;
-                }
+            if (!code.startsWith('data:')) {
+                imageSrc = 'data:image/png;base64,' + code;
             }
             
             resultImg.src = imageSrc;
@@ -314,22 +331,22 @@
                 previewArea.querySelector('p').style.display = 'none';
                 previewArea.style.border = '2px solid #4ade80';
                 document.getElementById('dlBtn').classList.remove('hidden');
-                showToast('✅ Gambar berhasil dibuat!');
+                showToast('✅ Berhasil restore!');
             };
             resultImg.onerror = () => {
-                showToast('❌ Kode tidak valid atau rusak!');
+                showToast('❌ Kode tidak valid');
             };
         }
         
-        function downloadImage() {
+        function downloadResult() {
             const a = document.createElement('a');
             a.href = resultImg.src;
-            a.download = 'decoded-image.png';
+            a.download = 'restored.png';
             a.click();
-            showToast('💾 Gambar didownload!');
+            showToast('💾 Tersimpan');
         }
         
-        // ========== DRAG & DROP ==========
+        // ========== DRAG DROP ==========
         document.querySelectorAll('.drop-zone').forEach(zone => {
             zone.addEventListener('dragover', (e) => {
                 e.preventDefault();
